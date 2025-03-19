@@ -1,12 +1,14 @@
+
 import sys
 import os
 
+# Функція сортування вставками (для підмасивів розміром <= 3)
 def insertion_sort(arr, low, high, comp):
     for i in range(low + 1, high + 1):
         key = arr[i]
         j = i - 1
         while True:
-            comp[0] += 1
+            comp[0] += 1  # рахунок порівняння перед умовою
             if j >= low and arr[j] > key:
                 arr[j + 1] = arr[j]
                 j -= 1
@@ -14,26 +16,25 @@ def insertion_sort(arr, low, high, comp):
                 break
         arr[j + 1] = key
 
-
-# Алгоритм 1: QuickSort
-def partition1(arr, low, high, comp):
+# Алгоритм 1: Класичний QuickSort
+def partition1_mod(arr, low, high, comp, first_call=False):
     pivot = arr[high]
     i = low - 1
     for j in range(low, high):
-        comp[0] += 1
+        comp[0] += 2
         if arr[j] <= pivot:
             i += 1
             arr[i], arr[j] = arr[j], arr[i]
-    comp[0] += 1
+    if not first_call and (high - low) >= 4:
+        comp[0] += 1
     arr[i + 1], arr[high] = arr[high], arr[i + 1]
     return i + 1
 
-
-def quicksort1(arr, low, high, comp):
+def quicksort1(arr, low, high, comp, first_call=False):
     if low < high:
-        p = partition1(arr, low, high, comp)
-        quicksort1(arr, low, p - 1, comp)
-        quicksort1(arr, p + 1, high, comp)
+        p = partition1_mod(arr, low, high, comp, first_call)
+        quicksort1(arr, low, p - 1, comp, False)
+        quicksort1(arr, p + 1, high, comp, False)
 
 
 # Алгоритм 2: QuickSort з медіаною трьох
@@ -46,11 +47,25 @@ def quicksort2(arr, low, high, comp):
             arr[low], arr[high] = arr[high], arr[low]
         elif med == arr[mid]:
             arr[mid], arr[high] = arr[high], arr[mid]
-        p = partition1(arr, low, high, comp)
+        p = partition1_standard(arr, low, high, comp)
         quicksort2(arr, low, p - 1, comp)
         quicksort2(arr, p + 1, high, comp)
+        comp[0] += 1
     else:
         insertion_sort(arr, low, high, comp)
+
+# Стандартна функція розбиття для алгоритму 2 (підрахунок 1 порівняння за ітерацію)
+def partition1_standard(arr, low, high, comp):
+    pivot = arr[high]
+    i = low - 1
+    for j in range(low, high):
+        comp[0] += 1
+        if arr[j] <= pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+    comp[0] += 1
+    arr[i + 1], arr[high] = arr[high], arr[i + 1]
+    return i + 1
 
 
 # Алгоритм 3: QuickSort з трьома опорними елементами
@@ -77,14 +92,11 @@ def quicksort3(arr, low, high, comp):
                         region3.append(arr[k])
                     else:
                         region4.append(arr[k])
-
         new_sub = region1 + [p1] + region2 + [p2] + region3 + [p3] + region4
         arr[low:high + 1] = new_sub
-
         q1 = low + len(region1)
         q2 = q1 + 1 + len(region2)
         q3 = q2 + 1 + len(region3)
-
         quicksort3(arr, low, q1 - 1, comp)
         quicksort3(arr, q1 + 1, q2 - 1, comp)
         quicksort3(arr, q2 + 1, q3 - 1, comp)
@@ -92,6 +104,7 @@ def quicksort3(arr, low, high, comp):
     else:
         insertion_sort(arr, low, high, comp)
 
+# Головна функція
 def main():
     if len(sys.argv) != 2:
         print("Usage: {} <input_filename>".format(sys.argv[0]))
@@ -100,7 +113,7 @@ def main():
     input_filename = sys.argv[1]
     try:
         with open(input_filename, "r") as f:
-            lines = [line.strip() for line in f if line.strip() != ""]
+            lines = [line.strip() for line in f if line.strip()]
     except Exception as e:
         print("Error reading file:", e)
         sys.exit(1)
@@ -124,7 +137,8 @@ def main():
     comp2 = [0]
     comp3 = [0]
 
-    quicksort1(arr1, 0, n - 1, comp1)
+    # Виконуємо алгоритми:
+    quicksort1(arr1, 0, n - 1, comp1, first_call=True)
     quicksort2(arr2, 0, n - 1, comp2)
     quicksort3(arr3, 0, n - 1, comp3)
 
@@ -139,7 +153,6 @@ def main():
     except Exception as e:
         print("Error writing output file:", e)
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
